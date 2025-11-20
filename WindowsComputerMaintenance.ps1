@@ -17,5 +17,6 @@ sfc /scannow
 
 #Checks if restart is needed, and restarts if confirmation is given
 if ($restart -eq $true) {
-    Restart-Computer -Confirm
+    Restart-Computer -Force -Confirm
+
 }
