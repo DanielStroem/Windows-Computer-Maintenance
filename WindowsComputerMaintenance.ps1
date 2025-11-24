@@ -1,21 +1,26 @@
-﻿#YOU NEED ADMIN PRIVILEGES TO RUN THIS SCRIPT
+#YOU NEED ADMIN PRIVILEGES TO RUN THIS SCRIPT
 
-#Checks if computer is domain joined and updates GPOs
-$domainJoined = (Get-CimInstance Win32_ComputerSystem).PartOfDomain
-if ($domainJoined -eq $true) {
+#Sets var values
+$domain = (Get-CimInstance Win32_ComputerSystem).PartOfDomain
+$check = Repair-WindowsImage -Online -CheckHealth
+$health = ($check).ImageHealthState
+$restart = ($check).RestartNeeded
+
+#Updates GPOs if computer is in a domain
+if ($domain -eq $true) {
     gpupdate /force
 }
 
-#Checks image health and repairs image if corrupt
-$health = (Repair-WindowsImage -Online -CheckHealth).ImageHealthState
+#Repairs image if corrupt, then updates $restart
 if ($health -ne "Healthy") {
-    $restart = (Repair-WindowsImage -Online -RestoreHealth -NoRestart).RestartNeeded
+    $restore = Repair-WindowsImage -Online -RestoreHealth -NoRestart
+    $restart = ($restore).RestartNeeded
 }
 
-#Scans and repairs system files
-sfc /scannow
+#Scans and repairs system files, then saves it to $sfc
+$sfc = sfc /scannow
 
-#Checks if restart is needed, and restarts if confirmation is given
+#Restarts computer if required and confirmation is given
 if ($restart -eq $true) {
     Restart-Computer -Force -Confirm
 }
